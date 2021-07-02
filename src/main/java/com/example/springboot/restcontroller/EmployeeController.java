@@ -1,9 +1,11 @@
 package com.example.springboot.restcontroller;
 
 import com.example.springboot.entity.Employee;
+import com.example.springboot.exception.EmployeeNotFoundException;
 import com.example.springboot.service.EmployeeService;
-import com.fasterxml.jackson.annotation.JsonView;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,14 +20,21 @@ public class EmployeeController {
 
     @GetMapping
     public List<Employee> retrieveEmployees() {
-        List<Employee> employees = employeeService.retrieveEmployees();
-        return employees;
+        return employeeService.retrieveEmployees();
     }
 
     @GetMapping("/{employeeId}")
-    public Optional<Employee> getEmployeeById(@PathVariable Long employeeId) {
+    public ResponseEntity<Employee> getEmployeeById(@PathVariable Long employeeId) {
         Optional<Employee> employee = employeeService.getEmployeeById(employeeId);
-        return employee;
+        try {
+            if (!employee.isPresent()) {
+                throw new EmployeeNotFoundException(employeeId);
+            }
+            return new ResponseEntity<>(employee.get(), HttpStatus.OK);
+        } catch(Exception ex) {
+            System.out.println(ex.getMessage());
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     @PostMapping
